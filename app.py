@@ -1,6 +1,6 @@
-from flask import Flask, request, render_template, jsonify, send_from_directory, url_for
-import subprocess
 import os
+import subprocess
+from flask import Flask, request, render_template, jsonify, send_from_directory, url_for
 import pandas as pd
 from datetime import datetime
 import openpyxl
@@ -28,7 +28,7 @@ def upload_file():
             file.save(file_path)
             file_paths.append(file_path)
     isbns, debug_infos = decode_barcodes_with_zxing(file_paths)
-    return render_template('result.html', isbns=isbns, debug_infos=debug_infos)
+    return jsonify({'isbns': isbns, 'debug_infos': debug_infos, 'image_paths': [url_for('uploaded_file', filename=os.path.basename(path)) for path in file_paths]})
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
@@ -46,33 +46,30 @@ def decode_barcodes_with_zxing(image_paths):
         formatted_image_path = 'file:/' + abs_image_path
         
         command = f'java -cp "{zxing_core_jar};{zxing_javase_jar};{jcommander_jar}" com.google.zxing.client.j2se.CommandLineRunner "{formatted_image_path}"'
-        debug_info = 'Running command: ' + command + '<br>'
+        debug_info = f'Running command: {command}<br>'
         
-        process = subprocess.run(command, capture_output=True, text=True, shell=True)
-        output = process.stdout
-        debug_info += 'Command output:<br>' + output.replace('\n', '<br>')
-        
-        parsed_isbn = None
-        raw_isbn = None
-        
-        for line in output.split('\n'):
-            if line.startswith('Parsed result'):
-                parsed_isbn = line.split(':')[-1].strip()
-            elif line.startswith('Raw result'):
-                raw_isbn = line.split(':')[-1].strip()
+        try:
+            process = subprocess.run(command, capture_output=True, text=True, shell=True)
+            output = process.stdout
+            debug_info += 'Command output:<br>' + output.replace('\n', '<br>')
 
-        if raw_isbn:
-            isbns.append(raw_isbn)
-        else:
-            isbns.append("No Raw ISBN found")
-        
-        if parsed_isbn:
-            isbns.append(parsed_isbn)
-        else:
-            isbns.append("No Parsed ISBN found")
-        
-        debug_infos.append(debug_info)
-    
+            raw_isbn = parsed_isbn = None
+
+            for line in output.split('\n'):
+                if 'Parsed result' in line:
+                    parsed_isbn = line.split(':')[-1].strip()
+                if 'Raw result' in line:
+                    raw_isbn = line.split(':')[-1].strip()
+
+            isbns.append(raw_isbn or "No Raw ISBN found")
+            isbns.append(parsed_isbn or "No Parsed ISBN found")
+            
+            debug_infos.append(debug_info)
+        except subprocess.CalledProcessError as e:
+            debug_info += f'Error: {str(e)}<br>'
+            debug_infos.append(debug_info)
+            isbns.append("Error occurred")
+
     add_isbns_to_excel(isbns, debug_infos)
     
     return isbns, debug_infos
@@ -80,7 +77,7 @@ def decode_barcodes_with_zxing(image_paths):
 def add_isbns_to_excel(isbns, debug_infos):
     file_name = 'data.xlsx'
     if not os.path.exists(file_name):
-        df = pd.DataFrame(columns=['key', 'time', 'isbn'])
+        df = pd.DataFrame(columns=['key', 'time', 'isbn', 'debug_info'])
         df.to_excel(file_name, sheet_name='data', index=False, engine='openpyxl')
     
     book = openpyxl.load_workbook(file_name)
@@ -89,9 +86,8 @@ def add_isbns_to_excel(isbns, debug_infos):
     current_key = len(sheet['A'])  
     
     for isbn, debug_info in zip(isbns, debug_infos):
-        new_key = current_key
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        new_row = [new_key, current_time,debug_info]
+        new_row = [current_key, current_time, isbn, debug_info]
         sheet.append(new_row)
         current_key += 1
     
