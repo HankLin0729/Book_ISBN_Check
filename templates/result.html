@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Book Information</title>
+    <style type="text/css">
+        .thumbnail { float: left; width: 6em; border: 1px solid #999;
+                     margin: 3em 1em 1em 0em; padding: 5px;
+                     text-align: center;}
+        .thumbnail img { border: 1px solid #aaa; }
+        .thumbnail p { margin:0em 0em 0em 0em; }
+        .clearboth { clear: both; }
+    </style>
+    <script>
+    function listEntries(booksInfo) {
+      var div = document.getElementById("data");
+      div.innerHTML = ''; 
+
+      var mainDiv = document.createElement("div");
+
+      for (var i in booksInfo) {
+        var book = booksInfo[i];
+        var thumbnailDiv = document.createElement("div");
+        thumbnailDiv.className = "thumbnail";
+
+        var a = document.createElement("a");
+        a.href = book.info_url;
+        a.innerHTML = book.bib_key;
+
+        var img = document.createElement("img");
+        img.src = book.thumbnail_url;
+        a.appendChild(img);
+
+        thumbnailDiv.appendChild(a);
+
+        var p = document.createElement("p");
+        p.innerHTML = book.preview;
+        if (p.innerHTML == "noview"){
+          p.style.fontWeight = "bold";
+          p.style.color = "#f00";
+        }
+
+        thumbnailDiv.appendChild(p);
+        mainDiv.appendChild(thumbnailDiv);
+      }
+      div.appendChild(mainDiv);
+    }
+
+    function search(query) {
+      var div = document.getElementById("data");
+      div.innerHTML = 'Loading...';
+
+      var jsonScript = document.getElementById("jsonScript");
+      if (jsonScript) {
+        jsonScript.parentNode.removeChild(jsonScript);
+      }
+
+      var scriptElement = document.createElement("script");
+      scriptElement.setAttribute("id", "jsonScript");
+      scriptElement.setAttribute("src",
+          "https://books.google.com/books?bibkeys=" +
+          escape(query.isbns.value) + "&jscmd=viewapi&callback=listEntries");
+      scriptElement.setAttribute("type", "text/javascript");
+      document.documentElement.firstChild.appendChild(scriptElement);
+    }
+
+    function showResult(result) {
+      var isbns = result.isbns;
+      var debugInfos = result.debug_infos;
+      var dataDiv = document.getElementById("data");
+      var debugDiv = document.getElementById("debug_info");
+      dataDiv.innerHTML = "";
+      debugDiv.innerHTML = "";
+
+      for (var i = 0; i < isbns.length; i++) {
+        var p = document.createElement("p");
+        p.innerHTML = "Detected ISBN: " + isbns[i];
+        dataDiv.appendChild(p);
+
+        var debugP = document.createElement("p");
+        debugP.innerHTML = debugInfos[i];
+        debugDiv.appendChild(debugP);
+      }
+
+      document.getElementById("continue_button").style.display = "block";
+    }
+
+    function startUpload() {
+      document.getElementById("upload_form").submit();
+    }
+
+    function continueProcess() {
+      document.getElementById("continue_button").style.display = "none";
+      document.getElementById("data").innerHTML = "";
+      document.getElementById("debug_info").innerHTML = "";
+    }
+    </script>
+</head>
+<body>
+    <h2>Book Information</h2>
+    <div id="data"></div>
+    <div id="debug_info"></div>
+    <button id="continue_button" style="display:none" onclick="continueProcess()">繼續</button>
+</body>
+</html>

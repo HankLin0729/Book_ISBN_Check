@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <title>書本辨識</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+</head>
+<body>
+    <div class="cursor-circle"></div>
+    <div class="cursor-dot"></div>
+
+    <h1>上傳檔案</h1>
+    <form method="post" enctype="multipart/form-data" id="upload_form" class="upload-form">
+        <label for="file-upload">選擇檔案</label>
+        <input type="file" id="file-upload" name="file" multiple>
+        <input type="submit" value="Upload">
+    </form>
+
+    <h1>即時辨識</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+    <div id="data"></div>
+    <div id="debug_info"></div>
+    <button id="continue_button" style="display:none; width:700px" onclick="continueProcess()">繼續辨識</button>
+    <script src="{{ url_for('static', filename='main.js') }}"></script>
+
+    <h2 id="interactive-ajax" data-text="Interactive AJAX" tabindex="-1">ISBN:</h2>
+    <form onsubmit="return false">
+        <p>isbn-number:
+            <input type="text" name="isbns" value="">
+            <button id="search_button" onclick="search(this.form)">Search</button>
+        </p>
+    </form>
+</body>
+</html>
