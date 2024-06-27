@@ -28,7 +28,7 @@ def upload_file():
             file.save(file_path)
             file_paths.append(file_path)
     isbns, debug_infos = decode_barcodes_with_zxing(file_paths)
-    return jsonify({'isbns': isbns, 'debug_infos': debug_infos, 'image_paths': [url_for('uploaded_file', filename=os.path.basename(path)) for path in file_paths]})
+    return render_template('result.html', isbns=isbns, debug_infos=debug_infos)
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
