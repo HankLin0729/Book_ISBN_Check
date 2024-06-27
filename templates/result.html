@@ -11,12 +11,14 @@
         .clearboth { clear: both; }
     </style>
     <script>
+    // 顯示書籍信息
     function listEntries(booksInfo) {
       var div = document.getElementById("data");
-      div.innerHTML = ''; 
+      div.innerHTML = ''; // 清空之前的內容
 
       var mainDiv = document.createElement("div");
 
+      // 遍歷每本書的信息
       for (var i in booksInfo) {
         var book = booksInfo[i];
         var thumbnailDiv = document.createElement("div");
@@ -45,15 +47,17 @@
       div.appendChild(mainDiv);
     }
 
+    // 搜索書籍信息
     function search(query) {
       var div = document.getElementById("data");
-      div.innerHTML = 'Loading...';
+      div.innerHTML = 'Loading...'; // 顯示加載中
 
       var jsonScript = document.getElementById("jsonScript");
       if (jsonScript) {
         jsonScript.parentNode.removeChild(jsonScript);
       }
 
+      // 創建一個新的 script 元素來請求書籍信息
       var scriptElement = document.createElement("script");
       scriptElement.setAttribute("id", "jsonScript");
       scriptElement.setAttribute("src",
@@ -63,6 +67,7 @@
       document.documentElement.firstChild.appendChild(scriptElement);
     }
 
+    // 顯示檢測結果
     function showResult(result) {
       var isbns = result.isbns;
       var debugInfos = result.debug_infos;
@@ -71,6 +76,7 @@
       dataDiv.innerHTML = "";
       debugDiv.innerHTML = "";
 
+      // 顯示檢測到的 ISBN 和調試信息
       for (var i = 0; i < isbns.length; i++) {
         var p = document.createElement("p");
         p.innerHTML = "Detected ISBN: " + isbns[i];
@@ -84,10 +90,12 @@
       document.getElementById("continue_button").style.display = "block";
     }
 
+    // 開始上傳文件
     function startUpload() {
       document.getElementById("upload_form").submit();
     }
 
+    // 繼續處理下一步
     function continueProcess() {
       document.getElementById("continue_button").style.display = "none";
       document.getElementById("data").innerHTML = "";
